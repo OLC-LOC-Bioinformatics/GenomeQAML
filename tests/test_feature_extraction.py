@@ -1,16 +1,27 @@
 # Tests for feature extraction of OLC Quality Assessment Tool
+import os
+
+parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+os.sys.path.insert(0, parentdir)
+
+import extract_features
+from extract_features import *
+
+
+gc_dict, longest_contig_dict, genome_length_dict, num_contigs_dict, n50_dict, \
+    n75_dict, l50_dict, l75_dict = extract_features.main('tests/test_fastas')
 
 
 def test_genome_length_normal_case():  # Given a normal(ish) fasta, tests that length is found correctly
-    assert find_genome_length('tests/test_fastas/normal.fasta') == 63
+    assert genome_length_dict['normal'] == 63
 
 
 def test_genome_length_with_lowercase():
-    assert find_genome_length('tests/test_fastas/normal_with_lowercase.fasta') == 63
+    assert genome_length_dict['normal_with_lowercase'] == 63
 
 
 def test_genome_length_blank_contig():
-    assert find_genome_length('tests/test_fastas/blank_contig.fasta') == 55
+    assert genome_length_dict['blank_contig'] == 55
 
 
 def test_genome_length_one_contig():
