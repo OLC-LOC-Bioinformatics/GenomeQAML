@@ -10,7 +10,7 @@ __author__ = 'adamkoziol'
 def main(sequencepath):
     """
     Run the appropriate functions in order
-    :param sequencepath: Path of folder containing FASTA genomes
+    :param sequencepath: path of folder containing FASTA genomes
     :return: gc_dict, longest_contig_dict, genome_length_dict, num_contigs_dict, n50_dict, n75_dict, l50_dict, l75_dict
     """
     files = find_files(sequencepath)
@@ -33,7 +33,7 @@ def find_files(sequencepath):
     """
     Use glob to find all FASTA files in the provided sequence path. NOTE: FASTA files must have an extension such as
     .fasta, .fa, or .fas. Extensions of .fsa, .tfa, ect. are not currently supported
-    :param sequencepath:
+    :param sequencepath: path of folder containing FASTA genomes
     :return: list of FASTA files
     """
     # Create a sorted list of all the FASTA files in the sequence path
@@ -44,7 +44,7 @@ def find_files(sequencepath):
 def filer(filelist):
     """
     Helper script that creates a dictionary of the stain name: /sequencepath/strain_name.extension)
-    :param filelist: List of files to parse
+    :param filelist: list of files to parse
     :return filedict: dictionary of stain name: /sequencepath/strain_name.extension
     """
     # Initialise the dictionary
