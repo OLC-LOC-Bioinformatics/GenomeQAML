@@ -1,0 +1,43 @@
+name: gqaml
+channels:
+- adamkoziol
+- conda-forge
+- defaults
+- r
+- bioconda
+- anaconda
+dependencies:
+- biopython=1.70=np112py35_1
+- mmtf-python=1.0.2=py35_0
+- ca-certificates=2017.11.5=0
+- certifi=2017.11.5=py35_0
+- freetype=2.7=1
+- jpeg=9b=2
+- libpng=1.6.34=0
+- libtiff=4.0.9=0
+- msgpack-python=0.4.8=py35_0
+- ncurses=5.9=10
+- olefile=0.44=py35_0
+- openssl=1.0.2n=0
+- pillow=4.2.1=py35_0
+- pip=9.0.1=py35_1
+- python=3.5.4=3
+- readline=7.0=0
+- reportlab=3.4.0=py35_0
+- setuptools=38.4.0=py35_0
+- sqlite=3.20.1=2
+- tk=8.6.7=0
+- wheel=0.30.0=py35_2
+- xz=5.2.3=0
+- zlib=1.2.11=0
+- intel-openmp=2018.0.0=hc7b2577_8
+- libgcc-ng=7.2.0=h7cc24e2_2
+- libgfortran-ng=7.2.0=h9f7466a_2
+- mkl=2018.0.1=h19d6760_4
+- numpy=1.12.1=py35hca0bb5e_1
+- pip:
+  - click==6.7
+  - genomeqaml (/home/adamkoziol/PycharmProjects/GenomeQAML)==0.0.1
+  - olctools (/home/adamkoziol/PycharmProjects/OLCTools)==0.3.23
+prefix: /home/adamkoziol/miniconda3/envs/gqaml
+
