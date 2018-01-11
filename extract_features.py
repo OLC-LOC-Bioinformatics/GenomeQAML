@@ -12,8 +12,9 @@ def main(sequencepath, report):
     """
     Run the appropriate functions in order
     :param sequencepath: path of folder containing FASTA genomes
-    :param report: Boolean to determine whether a report is to be created
-    :return: gc_dict, longest_contig_dict, genome_length_dict, num_contigs_dict, n50_dict, n75_dict, l50_dict, l75_dict
+    :param report: boolean to determine whether a report is to be created
+    :return: gc_dict, contig_dist_dict, longest_contig_dict, genome_length_dict, num_contigs_dict, n50_dict, n75_dict, \
+        n90_dict, l50_dict, l75_dict, l90_dict, orf_dist_dict
     """
     files = find_files(sequencepath)
     file_dict = filer(files)
@@ -476,6 +477,7 @@ def cli(sequencepath, report):
     Pass command line arguments to, and run the feature extraction functions
     """
     main(sequencepath, report)
+
 
 if __name__ == '__main__':
     cli()
