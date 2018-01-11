@@ -4,6 +4,7 @@ import subprocess
 import pandas as pd
 import sklearn
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
 import extract_features
 
 
@@ -36,10 +37,11 @@ def combine_csv_files(pass_folder, fail_folder):
 
 def fit_model(dataframe):
     features = list(dataframe.columns[1:9])
+    X = dataframe[features]
     y = dataframe['PassFail']
-    x = dataframe[features]
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     dt = DecisionTreeClassifier()
-    dt = dt.fit(x, y)
+    dt = dt.fit(X_train, y_train)
     with open('dt.dot', 'w') as f:
         sklearn.tree.export_graphviz(dt, out_file=f, feature_names=features)
     command = ["dot", "-Tpng", "dt.dot", "-o", "dt.png"]
