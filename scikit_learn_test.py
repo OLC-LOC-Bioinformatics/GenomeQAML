@@ -1,11 +1,12 @@
-import click
 import os
-import subprocess
-import pandas as pd
+import click
 import sklearn
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.model_selection import train_test_split
+import subprocess
+import numpy as np
+import pandas as pd
 import extract_features
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split, cross_val_score
 
 
 def generate_pass_csv(pass_folder):
@@ -41,6 +42,8 @@ def fit_model(dataframe):
     y = dataframe['PassFail']
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     dt = DecisionTreeClassifier()
+    scores = cross_val_score(dt, X, y, cv=5)
+    print(np.mean(scores))
     dt = dt.fit(X_train, y_train)
     with open('dt.dot', 'w') as f:
         sklearn.tree.export_graphviz(dt, out_file=f, feature_names=features)
