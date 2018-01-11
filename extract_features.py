@@ -24,8 +24,8 @@ def main(sequencepath):
     n75_dict = find_n75(contig_len_dict, genome_length_dict)
     l50_dict = find_l50(contig_len_dict, genome_length_dict)
     l75_dict = find_l75(contig_len_dict, genome_length_dict)
-    report(gc_dict, longest_contig_dict, genome_length_dict, num_contigs_dict, n50_dict, n75_dict, l50_dict, l75_dict,
-           sequencepath)
+    # report(gc_dict, longest_contig_dict, genome_length_dict, num_contigs_dict, n50_dict, n75_dict, l50_dict, l75_dict,
+    #        sequencepath)
     return gc_dict, longest_contig_dict, genome_length_dict, num_contigs_dict, n50_dict, n75_dict, l50_dict, l75_dict
 
 
