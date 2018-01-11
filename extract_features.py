@@ -347,7 +347,8 @@ def predict_orfs(file_dict):
         prodigal = ['prodigal', '-i', file_path, '-o', results,  '-f',  'sco']
         # Only run prodigal if the output file doesn't already exist
         if not os.path.isfile(results):
-            subprocess.call(prodigal)
+            with open(os.devnull, 'w') as f:  # No need to make the use see prodigal output, send it to devnull
+                subprocess.call(prodigal, stdout=f, stderr=f)
         # Populate the dictionary with the name of the results file
         orf_file_dict[file_name] = results
     return orf_file_dict
@@ -476,3 +477,5 @@ def cli(sequencepath, report):
     """
     main(sequencepath, report)
 
+if __name__ == '__main__':
+    cli()

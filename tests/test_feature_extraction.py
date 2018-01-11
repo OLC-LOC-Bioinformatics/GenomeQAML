@@ -7,8 +7,8 @@ os.sys.path.insert(0, parentdir)
 import extract_features
 
 
-gc_dict, longest_contig_dict, genome_length_dict, num_contigs_dict, n50_dict, \
-    n75_dict, l50_dict, l75_dict = extract_features.main('tests/test_fastas')
+gc_dict, contig_dist_dict, longest_contig_dict, genome_length_dict, num_contigs_dict, n50_dict, n75_dict, \
+    n90_dict, l50_dict, l75_dict, l90_dict, orf_dist_dict = extract_features.main('tests/test_fastas', report=False)
 
 
 def test_genome_length_normal_case():  # Given a normal(ish), tests that length is found correctly
@@ -145,3 +145,19 @@ def test_l75_dict_one_contig():
 
 def test_l75_dict_lots_of_contigs():
     assert l75_dict['several_contigs'] == 5
+
+
+def test_l90_dict_normal():
+    assert l90_dict['normal'] == 3
+
+
+def test_l90_dict_normal_with_lowercase():
+    assert l90_dict['normal_with_lowercase'] == 3
+
+
+def test_l90_dict_blank_contig():
+    assert l90_dict['blank_contig'] == 2
+
+
+def test_n90_dict_normal():
+    assert n90_dict['normal'] == 8

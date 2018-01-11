@@ -9,18 +9,12 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split, cross_val_score
 
 
-def generate_pass_csv(pass_folder):
-    gc_dict, longest_contig_dict, genome_length_dict, num_contigs_dict, n50_dict, \
-        n75_dict, l50_dict, l75_dict = extract_features.main(pass_folder)
-    extract_features.report(gc_dict, longest_contig_dict, genome_length_dict, num_contigs_dict, n50_dict,
-                            n75_dict, l50_dict, l75_dict, pass_folder)
+def generate_pass_csv(pass_folder):  # This method is now somewhat pointless.
+    extract_features.main(pass_folder, report=True)
 
 
 def generate_fail_csv(fail_folder):
-    gc_dict, longest_contig_dict, genome_length_dict, num_contigs_dict, n50_dict, \
-        n75_dict, l50_dict, l75_dict = extract_features.main(fail_folder)
-    extract_features.report(gc_dict, longest_contig_dict, genome_length_dict, num_contigs_dict, n50_dict,
-                            n75_dict, l50_dict, l75_dict, fail_folder)
+    extract_features.main(fail_folder, report=True)
 
 
 def combine_csv_files(pass_folder, fail_folder):
@@ -37,7 +31,7 @@ def combine_csv_files(pass_folder, fail_folder):
 
 
 def fit_model(dataframe):
-    features = list(dataframe.columns[1:9])
+    features = list(dataframe.columns[1:22])
     X = dataframe[features]
     y = dataframe['PassFail']
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
@@ -53,12 +47,10 @@ def fit_model(dataframe):
 
 
 def predict_results(fasta_dir, tree):
-    gc_dict, longest_contig_dict, genome_length_dict, num_contigs_dict, n50_dict, \
-        n75_dict, l50_dict, l75_dict = extract_features.main(fasta_dir)
-    extract_features.report(gc_dict, longest_contig_dict, genome_length_dict, num_contigs_dict, n50_dict,
-                            n75_dict, l50_dict, l75_dict, fasta_dir)
+    extract_features.main(fasta_dir, report=True)
     test_df = pd.read_csv(os.path.join(fasta_dir, 'extracted_features.csv'))
-    features = list(test_df.columns[1:9])
+    print(test_df)
+    features = list(test_df.columns[1:22])
     x = test_df[features]
     result = tree.predict(x)
     for i in range(len(result)):
