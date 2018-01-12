@@ -9,14 +9,6 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split, cross_val_score
 
 
-def generate_pass_csv(pass_folder):  # This method is now somewhat pointless.
-    extract_features.main(pass_folder, report=True)
-
-
-def generate_fail_csv(fail_folder):
-    extract_features.main(fail_folder, report=True)
-
-
 def combine_csv_files(pass_folder, fail_folder):
     df_fail = pd.read_csv(os.path.join(fail_folder, 'extracted_features.csv'))
     df_pass = pd.read_csv(os.path.join(pass_folder, 'extracted_features.csv'))
@@ -31,11 +23,14 @@ def combine_csv_files(pass_folder, fail_folder):
 
 
 def fit_model(dataframe):
-    features = list(dataframe.columns[1:22])
+    dataframe = pd.get_dummies(dataframe, columns=['Genus'], dummy_na=True)
+    features = list(dataframe.columns[1:len(dataframe.columns)])
+    features.remove('PassFail')
     X = dataframe[features]
     y = dataframe['PassFail']
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
     dt = DecisionTreeClassifier()
+    # dt = RandomForestClassifier()
     scores = cross_val_score(dt, X, y, cv=5)
     print(np.mean(scores))
     dt = dt.fit(X_train, y_train)
@@ -47,11 +42,11 @@ def fit_model(dataframe):
 
 
 def predict_results(fasta_dir, tree):
-    extract_features.main(fasta_dir, report=True)
     test_df = pd.read_csv(os.path.join(fasta_dir, 'extracted_features.csv'))
-    print(test_df)
-    features = list(test_df.columns[1:22])
-    x = test_df[features]
+    dataframe = pd.get_dummies(test_df, columns=['Genus'], dummy_na=True)
+    features = list(dataframe.columns[1:len(dataframe.columns)])
+    # features = list(test_df.columns[1:23])
+    x = dataframe[features]
     result = tree.predict(x)
     for i in range(len(result)):
         if result[i] == 0:
@@ -74,12 +69,23 @@ def predict_results(fasta_dir, tree):
               type=click.Path(exists=True),
               required=True,
               help='Path to folder with FASTAs you want to test.')
-def cli(pass_folder, fail_folder, test_folder):
-    generate_fail_csv(fail_folder)
-    generate_pass_csv(pass_folder)
+@click.option('-d', '--refseq_database',
+              type=click.Path(exists=True),
+              required=True,
+              help='Path to reduced refseq database sketch.')
+def cli(pass_folder, fail_folder, test_folder, refseq_database):
+    extract_features.main(sequencepath=fail_folder,
+                          refseq_database=refseq_database,
+                          report=True)
+    extract_features.main(sequencepath=pass_folder,
+                          refseq_database=refseq_database,
+                          report=True)
     df = combine_csv_files(fail_folder=fail_folder, pass_folder=pass_folder)
+    # extract_features.main(sequencepath=test_folder,
+    #                       refseq_database=refseq_database,
+    #                       report=True)
     dt = fit_model(df)
-    predict_results(test_folder, dt)
+    # predict_results(test_folder, dt)
 
 
 if __name__ == '__main__':

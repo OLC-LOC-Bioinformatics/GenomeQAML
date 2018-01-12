@@ -1,22 +1,26 @@
 #!/usr/bin/env python 3
 from Bio.SeqUtils import GC
+from biotools import mash
 from Bio import SeqIO
 from glob import glob
 import subprocess
 import click
 import os
-__author__ = 'adamkoziol'
+__author__ = 'adamkoziol', 'andrewlow'
 
 
-def main(sequencepath, report):
+def main(sequencepath, report, refseq_database, num_threads=12):
     """
     Run the appropriate functions in order
     :param sequencepath: path of folder containing FASTA genomes
     :param report: Boolean to determine whether a report is to be created
+    :param refseq_database: Path to reduced refseq database sketch
+    :param num_threads: Number of threads to run mash/other stuff on
     :return: gc_dict, longest_contig_dict, genome_length_dict, num_contigs_dict, n50_dict, n75_dict, l50_dict, l75_dict
     """
     files = find_files(sequencepath)
     file_dict = filer(files)
+    genus_dict = find_genus(file_dict, refseq_database, threads=num_threads)
     file_records = fasta_records(file_dict)
     contig_len_dict, gc_dict = fasta_stats(file_dict, file_records)
     contig_dist_dict = find_contig_distribution(contig_len_dict)
@@ -33,7 +37,7 @@ def main(sequencepath, report):
     orf_dist_dict = find_orf_distribution(orf_file_dict)
     if report:
         reporter(gc_dict, contig_dist_dict, longest_contig_dict, genome_length_dict, num_contigs_dict, n50_dict,
-                 n75_dict, n90_dict, l50_dict, l75_dict, l90_dict, orf_dist_dict, sequencepath)
+                 n75_dict, n90_dict, l50_dict, l75_dict, l90_dict, orf_dist_dict, genus_dict, sequencepath)
     return gc_dict, contig_dist_dict, longest_contig_dict, genome_length_dict, num_contigs_dict, n50_dict, n75_dict, \
         n90_dict, l50_dict, l75_dict, l90_dict, orf_dist_dict
 
@@ -80,6 +84,36 @@ def fasta_records(files):
         # Set the records dictionary as the value for file_records
         file_records[file_name] = record_dict
     return file_records
+
+
+def find_genus(files, database, threads=12):
+    """
+    Uses MASH to find the genus of fasta files.
+    :param files: File dictionary returned by filer method.
+    :param database: Path to reduced refseq database sketch.
+    :param threads: Number of threads to run mash with.
+    :return: genus_dict: Dictionary of genus for each sample. Will return NA if genus could not be found.
+    """
+    genus_dict = dict()
+    for file_name, fasta in files.items():
+        mash.screen(database, fasta,
+                    threads=threads,
+                    w='',
+                    i=0.95,
+                    output_file='screen.tab')
+        screen_output = mash.read_mash_screen('screen.tab')  # TODO: Put this in tmpdir.
+        try:
+            os.remove('screen.tab')
+        except:
+            pass
+        try:
+            genus = screen_output[0].query_id.split('/')[-3]
+            if genus == 'Shigella':
+                genus = 'Escherichia'
+            genus_dict[file_name] = genus
+        except:
+            genus_dict[file_name] = 'NA'
+    return genus_dict
 
 
 def fasta_stats(files, records):
@@ -332,7 +366,7 @@ def find_l90(contig_lengths_dict, genome_length_dict):
     return l90_dict
 
 
-def predict_orfs(file_dict):
+def predict_orfs(file_dict, num_threads=1):  # TODO: Finish making this parallelized.
     """
     Use prodigal to predict the number of open reading frames (ORFs) in each strain
     :param file_dict: dictionary of strain name: /sequencepath/strain_name.extension
@@ -352,6 +386,11 @@ def predict_orfs(file_dict):
         # Populate the dictionary with the name of the results file
         orf_file_dict[file_name] = results
     return orf_file_dict
+
+
+def run_prodigal(prodigal_command):
+    with open(os.devnull, 'w') as f:  # No need to make the use see prodigal output, send it to devnull
+        subprocess.call(prodigal_command, stdout=f, stderr=f)
 
 
 def find_orf_distribution(orf_file_dict):
@@ -405,7 +444,7 @@ def find_orf_distribution(orf_file_dict):
 
 
 def reporter(gc_dict, contig_dist_dict, longest_contig_dict, genome_length_dict, num_contigs_dict, n50_dict, n75_dict,
-             n90_dict, l50_dict, l75_dict, l90_dict, orf_dist_dict, sequencepath):
+             n90_dict, l50_dict, l75_dict, l90_dict, orf_dist_dict, genus_dict, sequencepath):
     """
     Create a report of all the extracted features
     :param gc_dict: dictionary of strain name: GC%
@@ -425,14 +464,14 @@ def reporter(gc_dict, contig_dist_dict, longest_contig_dict, genome_length_dict,
     # Initialise string with header information
     data = 'SampleName,TotalLength,NumContigs,LongestContig,Contigs>1000000,Contigs>500000,Contigs>100000,' \
            'Contigs>50000,Contigs>10000,Contigs>5000,Contigs<5000,TotalORFs,ORFs>3000,ORFs>1000,ORFs>500,' \
-           'ORFs<500,N50,N75,N90,L50,L75,L90,GC%\n'
+           'ORFs<500,N50,N75,N90,L50,L75,L90,GC%,Genus\n'
     # Create and open the report for writign
     with open(os.path.join(sequencepath, 'extracted_features.csv'), 'w') as feature_report:
         for file_name in longest_contig_dict:
             # Populate the data string with the appropriate values
             data += '{name},{totlen},{numcontigs},{longestcontig},{over_106},{over_56},{over_105},{over_55},' \
                     '{over_104},{over_54},{under_54},{tORFS},{ORF33},{ORF13},{ORF52}, {ORF11},{n50},{n75},{n90},' \
-                    '{l50},{l75},{l90},{gc}\n'\
+                    '{l50},{l75},{l90},{gc},{genus}\n'\
                 .format(name=file_name,
                         totlen=genome_length_dict[file_name],
                         numcontigs=num_contigs_dict[file_name],
@@ -455,7 +494,8 @@ def reporter(gc_dict, contig_dist_dict, longest_contig_dict, genome_length_dict,
                         l50=l50_dict[file_name],
                         l75=l75_dict[file_name],
                         l90=l90_dict[file_name],
-                        gc=gc_dict[file_name])
+                        gc=gc_dict[file_name],
+                        genus=genus_dict[file_name])
         # Write the string to file
         feature_report.write(data)
 
@@ -466,16 +506,20 @@ def reporter(gc_dict, contig_dist_dict, longest_contig_dict, genome_length_dict,
               type=click.Path(exists=True),
               required=True,
               help='Path of folder containing multi-FASTA files')
+@click.option('-d', '--refseq_database',
+              type=click.Path(exists=True),
+              required=True,
+              help='Path to reduced mash sketch of RefSeq.')
 @click.option('-r', '--report',
               is_flag=True,
               default=True,
               help='By default, a report of the extracted features is created. Include this flag if you do not want '
                    'a report created')
-def cli(sequencepath, report):
+def cli(sequencepath, report, refseq_database):
     """
     Pass command line arguments to, and run the feature extraction functions
     """
-    main(sequencepath, report)
+    main(sequencepath, report, refseq_database)
 
 if __name__ == '__main__':
     cli()
