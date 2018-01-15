@@ -1,12 +1,8 @@
 import os
-import copy
 import click
-import sklearn
-import subprocess
 import numpy as np
 import pandas as pd
 import extract_features
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score
 
@@ -34,34 +30,14 @@ def fit_model(dataframe):
     features.remove('PassFail')  # Make sure PassFail isn't a feature.
     X = dataframe[features]
     y = dataframe['PassFail']
-    dt = DecisionTreeClassifier(max_depth=10, min_samples_split=3, max_leaf_nodes=20)
+    # dt = DecisionTreeClassifier(max_depth=1, min_samples_split=5, max_leaf_nodes=20)
     # dt = DecisionTreeClassifier()
-    # dt = RandomForestClassifier()
+    # dt = RandomForestClassifier(max_depth=10, max_leaf_nodes=20)
+    dt = RandomForestClassifier()
     scores = cross_val_score(dt, X, y, cv=10)
     print(np.mean(scores))
     dt = dt.fit(X, y)
-    with open('dt.dot', 'w') as f:
-        sklearn.tree.export_graphviz(dt, out_file=f, feature_names=features)
-    command = ["dot", "-Tpng", "dt.dot", "-o", "dt.png"]
-    subprocess.check_call(command)
     return dt
-
-
-def write_training_set_results(decision_tree, dataframe):  # TODO: Figure out why this isn't working.
-    training_df = copy.deepcopy(dataframe)
-    dataframe = pd.get_dummies(dataframe, columns=['Genus'], dummy_na=True)
-    features = list(dataframe.columns[1:len(dataframe.columns)])
-    features.remove('PassFail')  # Make sure PassFail isn't a feature.
-    X = dataframe[features]
-    result = decision_tree.predict(X)
-    for i in range(len(result)):
-        if result[i] == 0:
-            output = 'Fail'
-        elif result[i] == 1:
-            output = 'Pass'
-        elif result[i] == 2:
-            output = 'Reference'
-        # print(training_df['SampleName'][i] + ',' + output)
 
 
 def predict_results(fasta_dir, tree, training_dataframe):
@@ -130,7 +106,7 @@ def cli(pass_folder, fail_folder, test_folder, refseq_database, ref_folder):
     # Combine the dataframes for training data so that we can fit our decision tree.
     df = combine_csv_files(fail_folder=fail_folder, pass_folder=pass_folder, ref_folder=ref_folder)
     dt = fit_model(df)
-    # write_training_set_results(dt, df)
+
     # Extract features for our test set if it hasn't already been done and attempt to predict results.
     if not os.path.isfile(os.path.join(test_folder, 'extracted_features.csv')):
         extract_features.main(sequencepath=test_folder,
