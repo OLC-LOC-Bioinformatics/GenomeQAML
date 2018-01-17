@@ -1,63 +1,69 @@
 import os
 import click
-import sklearn
-import subprocess
 import numpy as np
 import pandas as pd
 import extract_features
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
 
 
-def generate_pass_csv(pass_folder):  # This method is now somewhat pointless.
-    extract_features.main(pass_folder, report=True)
-
-
-def generate_fail_csv(fail_folder):
-    extract_features.main(fail_folder, report=True)
-
-
-def combine_csv_files(pass_folder, fail_folder):
+def combine_csv_files(pass_folder, fail_folder, ref_folder):
     df_fail = pd.read_csv(os.path.join(fail_folder, 'extracted_features.csv'))
     df_pass = pd.read_csv(os.path.join(pass_folder, 'extracted_features.csv'))
+    df_ref = pd.read_csv(os.path.join(ref_folder, 'extracted_features.csv'))
     # Add a column of 0s to fail, 1s to pass.
     fail = [0] * len(df_fail)
     not_fail = [1] * len(df_pass)
+    ref = [2] * len(df_ref)
     df_fail['PassFail'] = fail
     df_pass['PassFail'] = not_fail
-    frames = [df_fail, df_pass]
+    df_ref['PassFail'] = ref
+    frames = [df_fail, df_pass, df_ref]
     result = pd.concat(frames)
     return result
 
 
 def fit_model(dataframe):
-    features = list(dataframe.columns[1:22])
+    # Use pandas to get one-hot-encoding of categorical featues (Genus).
+    dataframe = pd.get_dummies(dataframe, columns=['Genus'], dummy_na=True)
+    features = list(dataframe.columns[1:len(dataframe.columns)])
+    features.remove('PassFail')  # Make sure PassFail isn't a feature.
     X = dataframe[features]
     y = dataframe['PassFail']
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    dt = DecisionTreeClassifier()
-    scores = cross_val_score(dt, X, y, cv=5)
+    # dt = DecisionTreeClassifier(max_depth=1, min_samples_split=5, max_leaf_nodes=20)
+    # dt = DecisionTreeClassifier()
+    # dt = RandomForestClassifier(max_depth=10, max_leaf_nodes=20)
+    dt = RandomForestClassifier()
+    scores = cross_val_score(dt, X, y, cv=10)
     print(np.mean(scores))
-    dt = dt.fit(X_train, y_train)
-    with open('dt.dot', 'w') as f:
-        sklearn.tree.export_graphviz(dt, out_file=f, feature_names=features)
-    command = ["dot", "-Tpng", "dt.dot", "-o", "dt.png"]
-    subprocess.check_call(command)
+    dt = dt.fit(X, y)
     return dt
 
 
-def predict_results(fasta_dir, tree):
-    extract_features.main(fasta_dir, report=True)
+def predict_results(fasta_dir, tree, training_dataframe):
     test_df = pd.read_csv(os.path.join(fasta_dir, 'extracted_features.csv'))
-    print(test_df)
-    features = list(test_df.columns[1:22])
-    x = test_df[features]
+    dataframe = pd.get_dummies(test_df, columns=['Genus'], dummy_na=True)
+    # Remove any genera from the test dataframe that weren't part of our training set.
+    training_dataframe = pd.get_dummies(training_dataframe, columns=['Genus'], dummy_na=True)
+    for column in dataframe:
+        if column not in training_dataframe:
+            dataframe.drop(column, axis=1, inplace=True)
+    # Add any genera that weren't in our test set but were in the training set.
+    for column in training_dataframe:
+        if 'Genus' in column and column not in dataframe:
+            not_present = [0] * len(dataframe)
+            dataframe[column] = not_present
+    # Then, add any features that were part of training data but not part of test data
+    features = list(dataframe.columns[1:len(dataframe.columns)])
+    x = dataframe[features]
     result = tree.predict(x)
     for i in range(len(result)):
         if result[i] == 0:
             output = 'Fail'
         elif result[i] == 1:
             output = 'Pass'
+        elif result[i] == 2:
+            output = 'Reference'
         print(test_df['SampleName'][i] + ',' + output)
 
 
@@ -70,16 +76,43 @@ def predict_results(fasta_dir, tree):
               type=click.Path(exists=True),
               required=True,
               help='Path to folder with training FASTAs that fail quality metrics.')
+@click.option('-r', '--ref_folder',
+              type=click.Path(exists=True),
+              required=True,
+              help='Path to folder with training FASTAs that have excellent quality metrics.')
 @click.option('-t', '--test_folder',
               type=click.Path(exists=True),
               required=True,
               help='Path to folder with FASTAs you want to test.')
-def cli(pass_folder, fail_folder, test_folder):
-    generate_fail_csv(fail_folder)
-    generate_pass_csv(pass_folder)
-    df = combine_csv_files(fail_folder=fail_folder, pass_folder=pass_folder)
+@click.option('-d', '--refseq_database',
+              type=click.Path(exists=True),
+              required=True,
+              help='Path to reduced refseq database sketch.')
+def cli(pass_folder, fail_folder, test_folder, refseq_database, ref_folder):
+    # Extract features for pass data, fail data, and reference data if it hasn't already been done.
+    if not os.path.isfile(os.path.join(fail_folder, 'extracted_features.csv')):
+        extract_features.main(sequencepath=fail_folder,
+                              refseq_database=refseq_database,
+                              report=True)
+    if not os.path.isfile(os.path.join(pass_folder, 'extracted_features.csv')):
+        extract_features.main(sequencepath=pass_folder,
+                              refseq_database=refseq_database,
+                              report=True)
+    if not os.path.isfile(os.path.join(ref_folder, 'extracted_features.csv')):
+        extract_features.main(sequencepath=ref_folder,
+                              refseq_database=refseq_database,
+                              report=True)
+
+    # Combine the dataframes for training data so that we can fit our decision tree.
+    df = combine_csv_files(fail_folder=fail_folder, pass_folder=pass_folder, ref_folder=ref_folder)
     dt = fit_model(df)
-    predict_results(test_folder, dt)
+
+    # Extract features for our test set if it hasn't already been done and attempt to predict results.
+    if not os.path.isfile(os.path.join(test_folder, 'extracted_features.csv')):
+        extract_features.main(sequencepath=test_folder,
+                              refseq_database=refseq_database,
+                              report=True)
+    predict_results(test_folder, dt, df)
 
 
 if __name__ == '__main__':

@@ -8,6 +8,9 @@ cache: pip
 install:
   - pip install -r requirements.txt
   - sudo apt install prodigal
+  - wget https://github.com/marbl/Mash/releases/download/v2.0/mash-Linux64-v2.0.tar
+  - tar xf mash-Linux64-v2.0.tar
+  - export PATH=$PATH:$PWD/mash-Linux64-v2.0
 
 branches:
   only:
