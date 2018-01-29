@@ -1,5 +1,6 @@
 import os
 import click
+import pickle
 import numpy as np
 import pandas as pd
 import extract_features
@@ -30,10 +31,8 @@ def fit_model(dataframe):
     features.remove('PassFail')  # Make sure PassFail isn't a feature.
     X = dataframe[features]
     y = dataframe['PassFail']
-    # dt = DecisionTreeClassifier(max_depth=1, min_samples_split=5, max_leaf_nodes=20)
-    # dt = DecisionTreeClassifier()
-    # dt = RandomForestClassifier(max_depth=10, max_leaf_nodes=20)
-    dt = RandomForestClassifier()
+    dt = RandomForestClassifier(max_depth=10, max_leaf_nodes=20)
+    # dt = RandomForestClassifier()
     scores = cross_val_score(dt, X, y, cv=10)
     print(np.mean(scores))
     dt = dt.fit(X, y)
@@ -57,6 +56,7 @@ def predict_results(fasta_dir, tree, training_dataframe):
     features = list(dataframe.columns[1:len(dataframe.columns)])
     x = dataframe[features]
     result = tree.predict(x)
+    # result = tree.predict_proba(x)
     for i in range(len(result)):
         if result[i] == 0:
             output = 'Fail'
@@ -112,8 +112,8 @@ def cli(pass_folder, fail_folder, test_folder, refseq_database, ref_folder):
         extract_features.main(sequencepath=test_folder,
                               refseq_database=refseq_database,
                               report=True)
-    predict_results(test_folder, dt, df)
-
+    predict_results(test_folder, dt, df)  # TODO: Add check that FASTA folder actuall has stuff in it.
+    pickle.dump(dt, open('model.p', 'wb'))
 
 if __name__ == '__main__':
     cli()
