@@ -4,8 +4,8 @@ import pickle
 import numpy as np
 import pandas as pd
 import extract_features
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import cross_val_score
+from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.model_selection import cross_val_score, GridSearchCV
 
 
 def combine_csv_files(pass_folder, fail_folder, ref_folder):
@@ -31,11 +31,23 @@ def fit_model(dataframe):
     features.remove('PassFail')  # Make sure PassFail isn't a feature.
     X = dataframe[features]
     y = dataframe['PassFail']
-    dt = RandomForestClassifier(max_depth=10, max_leaf_nodes=20)
-    # dt = RandomForestClassifier()
+    # dt = RandomForestClassifier(n_estimators=100, max_depth=10, max_leaf_nodes=20)
+    param_dict = {'n_estimators': [10, 20, 50, 100],
+                  'max_depth': [5, 10, 20, 50, 100, 200],
+                  'max_leaf_nodes': [10, 20, 40, 50, 100, 200],
+                  'criterion': ['gini', 'entropy']}
+    dt = ExtraTreesClassifier()
+    grid_search = GridSearchCV(dt, param_dict)
+    grid_search.fit(X, y)
+    print(grid_search.best_params_)
+    dt = ExtraTreesClassifier(n_estimators=grid_search.best_params_['n_estimators'],
+                              max_depth=grid_search.best_params_['max_depth'],
+                              max_leaf_nodes=grid_search.best_params_['max_leaf_nodes'],
+                              criterion=grid_search.best_params_['criterion'])
     scores = cross_val_score(dt, X, y, cv=10)
     print(np.mean(scores))
     dt = dt.fit(X, y)
+    print(dt.get_params())
     return dt
 
 
@@ -64,7 +76,7 @@ def predict_results(fasta_dir, tree, training_dataframe):
             output = 'Pass'
         elif result[i] == 2:
             output = 'Reference'
-        print(test_df['SampleName'][i] + ',' + output)
+        # print(test_df['SampleName'][i] + ',' + output)
 
 
 @click.command()
