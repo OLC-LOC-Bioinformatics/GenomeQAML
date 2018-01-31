@@ -3,11 +3,11 @@ from setuptools import setup, find_packages
 __author__ = 'adamkoziol'
 setup(
     name="GenomeQAML",
-    version="0.0.3",
-    packages=find_packages('genomeqaml'),
-    package_data={'': ['*.msh', '*.p']},
-    data_files=[('', ['genomeqaml/*.msh', 'genomeqaml/*.p'])],
-    include_package_data=True,
+    version="0.0.4",
+    packages=['genomeqaml'],
+    # package_data={'genomeqaml': ['*.msh', '*.p']},
+    data_files=[('', ['genomeqaml/refseq.msh', 'genomeqaml/model.p', 'genomeqaml/dataframe.p'])],
+    # include_package_data=True,
     license='MIT',
     scripts=['genomeqaml/classify.py'],
     author='OLC Bioinformatics',

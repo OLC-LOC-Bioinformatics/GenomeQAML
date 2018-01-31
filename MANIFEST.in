@@ -1,3 +1,0 @@
-include genomeqaml/dataframe.p
-include genomeqaml/model.p
-include genomeqaml/refseq.msh
