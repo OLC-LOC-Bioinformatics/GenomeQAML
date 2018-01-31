@@ -6,6 +6,7 @@ setup(
     version="0.0.1",
     include_package_data=True,
     license='MIT',
+    scripts='genomeqaml/classify.py',
     author='OLC Bioinformatics',
     author_email='adam.koziol@inspection.gc.ca',
     description='CFIA OLC Genome Quality Assessment with Machine Learning',

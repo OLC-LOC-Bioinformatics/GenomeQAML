@@ -47,7 +47,6 @@ def fit_model(dataframe):
     scores = cross_val_score(dt, X, y, cv=10)
     print(np.mean(scores))
     dt = dt.fit(X, y)
-    print(dt.get_params())
     return dt
 
 
@@ -126,6 +125,7 @@ def cli(pass_folder, fail_folder, test_folder, refseq_database, ref_folder):
                               report=True)
     predict_results(test_folder, dt, df)  # TODO: Add check that FASTA folder actuall has stuff in it.
     pickle.dump(dt, open('model.p', 'wb'))
+    pickle.dump(df, open('dataframe.p', 'wb'))
 
 if __name__ == '__main__':
     cli()
