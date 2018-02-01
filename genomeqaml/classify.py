@@ -14,7 +14,8 @@ def classify_data(model, test_folder, refseq_database):
                               refseq_database=refseq_database)
     test_df = pd.read_csv(os.path.join(test_folder, 'extracted_features.csv'))
     dataframe = pd.get_dummies(test_df, columns=['Genus'], dummy_na=True)
-    df = pickle.load(open('genomeqaml/dataframe.p', 'rb'))
+    current_dir = os.path.dirname(os.path.realpath(__file__))
+    df = pickle.load(open(current_dir + '/../dataframe.p', 'rb'))
     training_dataframe = pd.get_dummies(df, columns=['Genus'], dummy_na=True)
     for column in dataframe:
         if column not in training_dataframe:
@@ -46,5 +47,6 @@ if __name__ == '__main__':
                         required=True,
                         help='Path to folder containing FASTA files you want to test.')
     args = parser.parse_args()
-    model = pickle.load(open('genomeqaml/model.p', 'rb'))
-    classify_data(model, args.test_folder, 'genomeqaml/refseq.msh')
+    current_dir = os.path.dirname(os.path.realpath(__file__))
+    model = pickle.load(open(current_dir + '/../model.p', 'rb'))
+    classify_data(model, args.test_folder, current_dir + '/../refseq.msh')
