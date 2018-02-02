@@ -6,9 +6,10 @@ import pandas as pd
 from genomeqaml import extract_features
 
 
-def classify_data(model, test_folder, refseq_database):
+def classify_data(model, test_folder, refseq_database, report_file):
     # Extract features from the training folder.
     if not os.path.isfile(os.path.join(test_folder, 'extracted_features.csv')):
+        print('Extracting features!')
         extract_features.main(sequencepath=test_folder,
                               report=True,
                               refseq_database=refseq_database)
@@ -29,7 +30,7 @@ def classify_data(model, test_folder, refseq_database):
     features = list(dataframe.columns[1:len(dataframe.columns)])
     x = dataframe[features]
     result = model.predict(x)
-    # result = tree.predict_proba(x)
+    probabilities = model.predict_proba(x)
     for i in range(len(result)):
         if result[i] == 0:
             output = 'Fail'
@@ -37,7 +38,11 @@ def classify_data(model, test_folder, refseq_database):
             output = 'Pass'
         elif result[i] == 2:
             output = 'Reference'
-        print(test_df['SampleName'][i] + ',' + output)
+        fail_prob = '%.2f' % round(probabilities[i][0] * 100.0, 2)
+        pass_prob = '%.2f' % round(probabilities[i][1] * 100.0, 2)
+        ref_prob = '%.2f' % round(probabilities[i][2] * 100.0, 2)
+        with open(report_file, 'a+') as f:
+            f.write(test_df['SampleName'][i] + ',' + output + ',' + fail_prob + ',' + pass_prob + ',' + ref_prob + '\n')
 
 
 if __name__ == '__main__':
@@ -46,7 +51,14 @@ if __name__ == '__main__':
                         type=str,
                         required=True,
                         help='Path to folder containing FASTA files you want to test.')
+    parser.add_argument('-r', '--report_file',
+                        type=str,
+                        default='QAMLreport.csv',
+                        help='Name of output file. Default is QAMLreport.csv.')
     args = parser.parse_args()
     current_dir = os.path.dirname(os.path.realpath(__file__))
     model = pickle.load(open(current_dir + '/../model.p', 'rb'))
-    classify_data(model, args.test_folder, current_dir + '/../refseq.msh')
+    with open(args.report_file, 'w') as f:
+        f.write('Sample,Predicted_Class,Percent_Fail,Percent_Pass,Percent_Ref\n')
+    classify_data(model, args.test_folder, current_dir + '/../refseq.msh', args.report_file)
+    print('Classification complete! Results can be found in {}'.format(args.report_file))

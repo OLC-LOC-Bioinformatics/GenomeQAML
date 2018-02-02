@@ -21,7 +21,23 @@ is highly recommended.
 
 ## Usage
 
-GenomeQAML takes a directory containing uncompressed fasta files as input - these will be classified and
-the results printed to your screen.
+GenomeQAML takes a directory containing uncompressed fasta files as input - these will be classified and a
+ report written to a CSV-formatted file for your inspection.
 
 To run, type `classify.py -t /path/to/fasta/folder`
+
+This will create a report, by default called `QAMLreport.csv`. You can change the name 
+of the report with the `-r` argument.
+
+```
+usage: classify.py [-h] -t TEST_FOLDER [-r REPORT_FILE]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -t TEST_FOLDER, --test_folder TEST_FOLDER
+                        Path to folder containing FASTA files you want to
+                        test.
+  -r REPORT_FILE, --report_file REPORT_FILE
+                        Name of output file. Default is QAMLreport.csv.
+
+```
