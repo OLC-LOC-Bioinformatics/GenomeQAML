@@ -104,7 +104,7 @@ def find_genus(files, database, threads=12):
     :return: genus_dict: Dictionary of genus for each sample. Will return NA if genus could not be found.
     """
     genus_dict = dict()
-    tmpdir = str(time.time().split('.')[-1])
+    tmpdir = str(time.time()).split('.')[-1]
     if not os.path.isdir(tmpdir):
         os.makedirs(tmpdir)
     for file_name, fasta in files.items():
