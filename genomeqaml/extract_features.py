@@ -6,6 +6,7 @@ import multiprocessing
 from Bio import SeqIO
 from glob import glob
 import subprocess
+import shutil
 import click
 import time
 import os
@@ -103,15 +104,18 @@ def find_genus(files, database, threads=12):
     :return: genus_dict: Dictionary of genus for each sample. Will return NA if genus could not be found.
     """
     genus_dict = dict()
+    tmpdir = str(time.time().split('.')[-1])
+    if not os.path.isdir(tmpdir):
+        os.makedirs(tmpdir)
     for file_name, fasta in files.items():
         mash.screen(database, fasta,
                     threads=threads,
                     w='',
                     i=0.95,
-                    output_file='screen.tab')
-        screen_output = mash.read_mash_screen('screen.tab')  # TODO: Put this in tmpdir.
+                    output_file=os.path.join(tmpdir, 'screen.tab'))
+        screen_output = mash.read_mash_screen(os.path.join(tmpdir, 'screen.tab'))
         try:
-            os.remove('screen.tab')
+            os.remove(os.path.join(tmpdir, 'screen.tab'))
         except IOError:
             pass
         try:
@@ -121,6 +125,8 @@ def find_genus(files, database, threads=12):
             genus_dict[file_name] = genus
         except IndexError:
             genus_dict[file_name] = 'NA'
+
+    shutil.rmtree(tmpdir)
     return genus_dict
 
 

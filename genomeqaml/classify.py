@@ -3,16 +3,18 @@ import os
 import pickle
 import argparse
 import pandas as pd
+import multiprocessing
 from genomeqaml import extract_features
 
 
-def classify_data(model, test_folder, refseq_database, report_file):
+def classify_data(model, test_folder, refseq_database, report_file, threads=4):
     # Extract features from the training folder.
     if not os.path.isfile(os.path.join(test_folder, 'extracted_features.csv')):
         print('Extracting features!')
         extract_features.main(sequencepath=test_folder,
                               report=True,
-                              refseq_database=refseq_database)
+                              refseq_database=refseq_database,
+                              num_threads=threads)
     test_df = pd.read_csv(os.path.join(test_folder, 'extracted_features.csv'))
     dataframe = pd.get_dummies(test_df, columns=['Genus'], dummy_na=True)
     current_dir = os.path.dirname(os.path.realpath(__file__))
@@ -46,6 +48,7 @@ def classify_data(model, test_folder, refseq_database, report_file):
 
 
 if __name__ == '__main__':
+    num_cpus = multiprocessing.cpu_count()
     parser = argparse.ArgumentParser()
     parser.add_argument('-t', '--test_folder',
                         type=str,
@@ -55,10 +58,15 @@ if __name__ == '__main__':
                         type=str,
                         default='QAMLreport.csv',
                         help='Name of output file. Default is QAMLreport.csv.')
+    parser.add_argument('-n', '--num_threads',
+                        type=int,
+                        default=num_cpus,
+                        help='Number of threads to run the feature extraction module with.'
+                             ' Defaults to number of CPUs on your machine.')
     args = parser.parse_args()
     current_dir = os.path.dirname(os.path.realpath(__file__))
     model = pickle.load(open(current_dir + '/../model.p', 'rb'))
     with open(args.report_file, 'w') as f:
         f.write('Sample,Predicted_Class,Percent_Fail,Percent_Pass,Percent_Ref\n')
-    classify_data(model, args.test_folder, current_dir + '/../refseq.msh', args.report_file)
+    classify_data(model, args.test_folder, current_dir + '/../refseq.msh', args.report_file, threads=args.num_threads)
     print('Classification complete! Results can be found in {}'.format(args.report_file))
