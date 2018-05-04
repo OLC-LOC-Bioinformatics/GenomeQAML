@@ -1,5 +1,5 @@
 [![Build status](https://travis-ci.org/OLC-LOC-Bioinformatics/GenomeQAML.svg?master)](https://travis-ci.org/OLC-LOC-Bioinformatics)
-# GenomeQAML: Genome Quality Assesment with Machine Learning
+# GenomeQAML: Genome Quality Assessment with Machine Learning
 
 The GenomeQAML is a script that uses a pre-computed ExtraTreesClassifier model in order to 
 classify FASTA-formatted _de novo_ assemblies as bad, good, or very good. It's easy to use,
