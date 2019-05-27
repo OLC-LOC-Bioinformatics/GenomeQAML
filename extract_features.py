@@ -19,6 +19,7 @@ def main(sequencepath, report, refseq_database, num_threads=12, start=time.time(
     :param report: boolean to determine whether a report is to be created
     :param refseq_database: Path to reduced refseq database sketch
     :param num_threads: Number of threads to run mash/other stuff on
+    :param start: current start time; used for printtime messages
     :return: gc_dict, contig_dist_dict, longest_contig_dict, genome_length_dict, num_contigs_dict, n50_dict, n75_dict, \
         n90_dict, l50_dict, l75_dict, l90_dict, orf_dist_dict
     """
