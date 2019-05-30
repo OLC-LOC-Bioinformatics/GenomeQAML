@@ -1,20 +1,20 @@
 language: python
 python:
-  - '3.4'
-  - '3.5'
   - '3.6'
-cache: pip
-
-install:
-  - pip install -r requirements.txt
-  - sudo apt install prodigal
-  - wget https://github.com/marbl/Mash/releases/download/v2.0/mash-Linux64-v2.0.tar
-  - tar xf mash-Linux64-v2.0.tar
-  - export PATH=$PATH:$PWD/mash-Linux64-v2.0
-
-branches:
-  only:
-    - master
+before_install:
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  - conda config --add channels conda-forge
+  - conda config --add channels bioconda
+  - conda install -c adamkoziol genewrappers=0.0.0.3
+  - conda install scikit-learn=0.21.1
+  - conda install scipy=1.3.0
+  - conda install prodigal=2.6.3
+  - conda install biopython=1.72
 
 script:
-  - pytest tests/
+  - pytest tests/ -s -vv
