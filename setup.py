@@ -15,6 +15,7 @@ setup(
     description='CFIA OLC Genome Quality Assessment with Machine Learning',
     url='https://github.com/OLC-LOC-Bioinformatics/GenomeQAML',
     long_description=open('README.md').read(),
+    long_description_content_type='text/markdown',
     install_requires=[
         'click',
         'biopython',
