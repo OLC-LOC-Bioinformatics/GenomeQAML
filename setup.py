@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-from setuptools import setup, find_packages
+from setuptools import setup
 __author__ = 'adamkoziol'
 setup(
     name="GenomeQAML",
-    version="0.0.11",
+    version="0.0.12",
     packages=['genomeqaml'],
     # package_data={'genomeqaml': ['*.msh', '*.p']},
     data_files=[('', ['genomeqaml/refseq.msh', 'genomeqaml/model.p', 'genomeqaml/dataframe.p'])],

@@ -18,7 +18,7 @@ def classify_data(model, test_folder, refseq_database, report_file, threads=4):
     test_df = pd.read_csv(os.path.join(test_folder, 'extracted_features.csv'))
     dataframe = pd.get_dummies(test_df, columns=['Genus'], dummy_na=True)
     current_dir = os.path.dirname(os.path.realpath(__file__))
-    df = pickle.load(open(current_dir + '/../dataframe.p', 'rb'))
+    df = pickle.load(open(os.path.join(current_dir, 'dataframe.p'), 'rb'))
     training_dataframe = pd.get_dummies(df, columns=['Genus'], dummy_na=True)
     for column in dataframe:
         if column not in training_dataframe:
@@ -33,6 +33,7 @@ def classify_data(model, test_folder, refseq_database, report_file, threads=4):
     x = dataframe[features]
     result = model.predict(x)
     probabilities = model.predict_proba(x)
+    output = 'ND'
     for i in range(len(result)):
         if result[i] == 0:
             output = 'Fail'
@@ -43,8 +44,9 @@ def classify_data(model, test_folder, refseq_database, report_file, threads=4):
         fail_prob = '%.2f' % round(probabilities[i][0] * 100.0, 2)
         pass_prob = '%.2f' % round(probabilities[i][1] * 100.0, 2)
         ref_prob = '%.2f' % round(probabilities[i][2] * 100.0, 2)
-        with open(report_file, 'a+') as f:
-            f.write(test_df['SampleName'][i] + ',' + output + ',' + fail_prob + ',' + pass_prob + ',' + ref_prob + '\n')
+        with open(report_file, 'a+') as report:
+            report.write(test_df['SampleName'][i] + ',' + output + ',' + fail_prob + ',' + pass_prob + ',' + ref_prob
+                         + '\n')
 
 
 if __name__ == '__main__':
@@ -64,9 +66,13 @@ if __name__ == '__main__':
                         help='Number of threads to run the feature extraction module with.'
                              ' Defaults to number of CPUs on your machine.')
     args = parser.parse_args()
-    current_dir = os.path.dirname(os.path.realpath(__file__))
-    model = pickle.load(open(current_dir + '/../model.p', 'rb'))
+    cur_dir = os.path.dirname(os.path.realpath(__file__))
+    model_file = pickle.load(open(os.path.join(cur_dir, 'model.p'), 'rb'))
     with open(args.report_file, 'w') as f:
         f.write('Sample,Predicted_Class,Percent_Fail,Percent_Pass,Percent_Ref\n')
-    classify_data(model, args.test_folder, current_dir + '/../refseq.msh', args.report_file, threads=args.num_threads)
+    classify_data(model=model_file,
+                  test_folder=args.test_folder,
+                  refseq_database=os.path.join(cur_dir, 'refseq.msh'),
+                  report_file=args.report_file,
+                  threads=args.num_threads)
     print('Classification complete! Results can be found in {}'.format(args.report_file))
