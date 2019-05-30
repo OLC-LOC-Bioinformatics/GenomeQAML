@@ -18,7 +18,7 @@ def classify_data(model, test_folder, refseq_database, report_file, threads=4):
     test_df = pd.read_csv(os.path.join(test_folder, 'extracted_features.csv'))
     dataframe = pd.get_dummies(test_df, columns=['Genus'], dummy_na=True)
     current_dir = os.path.dirname(os.path.realpath(__file__))
-    df = pickle.load(open(os.path.join(current_dir, 'dataframe.p'), 'rb'))
+    df = pickle.load(open(os.path.join(current_dir, '..', 'dataframe.p'), 'rb'))
     training_dataframe = pd.get_dummies(df, columns=['Genus'], dummy_na=True)
     for column in dataframe:
         if column not in training_dataframe:
@@ -67,12 +67,12 @@ if __name__ == '__main__':
                              ' Defaults to number of CPUs on your machine.')
     args = parser.parse_args()
     cur_dir = os.path.dirname(os.path.realpath(__file__))
-    model_file = pickle.load(open(os.path.join(cur_dir, 'model.p'), 'rb'))
+    model_file = pickle.load(open(os.path.join(cur_dir, '..', 'model.p'), 'rb'))
     with open(args.report_file, 'w') as f:
         f.write('Sample,Predicted_Class,Percent_Fail,Percent_Pass,Percent_Ref\n')
     classify_data(model=model_file,
                   test_folder=args.test_folder,
-                  refseq_database=os.path.join(cur_dir, 'refseq.msh'),
+                  refseq_database=os.path.join(cur_dir, '..', 'refseq.msh'),
                   report_file=args.report_file,
                   threads=args.num_threads)
     print('Classification complete! Results can be found in {}'.format(args.report_file))
