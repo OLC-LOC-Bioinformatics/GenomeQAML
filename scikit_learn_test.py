@@ -3,7 +3,7 @@ import click
 import pickle
 import numpy as np
 import pandas as pd
-import extract_features
+from genomeqaml import extract_features
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.model_selection import cross_val_score, GridSearchCV
 
@@ -123,9 +123,10 @@ def cli(pass_folder, fail_folder, test_folder, refseq_database, ref_folder):
         extract_features.main(sequencepath=test_folder,
                               refseq_database=refseq_database,
                               report=True)
-    predict_results(test_folder, dt, df)  # TODO: Add check that FASTA folder actuall has stuff in it.
+    predict_results(test_folder, dt, df)  # TODO: Add check that FASTA folder actually has stuff in it.
     pickle.dump(dt, open('model.p', 'wb'))
     pickle.dump(df, open('dataframe.p', 'wb'))
+
 
 if __name__ == '__main__':
     cli()

@@ -1,16 +1,17 @@
 # Tests for feature extraction of OLC Quality Assessment Tool
-import os
+# import os
 
-parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-os.sys.path.insert(0, parentdir)
+# parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# os.sys.path.insert(0, parentdir)
 
 from genomeqaml import extract_features
 
 
 gc_dict, contig_dist_dict, longest_contig_dict, genome_length_dict, num_contigs_dict, n50_dict, n75_dict, \
-    n90_dict, l50_dict, l75_dict, l90_dict, orf_dist_dict = extract_features.main('tests/test_fastas',
-                                                                                  refseq_database='genomeqaml/refseq.msh',
-                                                                                  report=False)
+    n90_dict, l50_dict, l75_dict, l90_dict, orf_dist_dict = \
+    extract_features.main('tests/test_fastas',
+                          refseq_database='genomeqaml/refseq.msh',
+                          report=False)
 
 
 def test_genome_length_normal_case():  # Given a normal(ish), tests that length is found correctly

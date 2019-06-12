@@ -3,7 +3,7 @@ from setuptools import setup
 __author__ = 'adamkoziol'
 setup(
     name="GenomeQAML",
-    version="0.0.13",
+    version="0.0.14",
     packages=['genomeqaml'],
     # package_data={'genomeqaml': ['*.msh', '*.p']},
     data_files=[('', ['genomeqaml/refseq.msh', 'genomeqaml/model.p', 'genomeqaml/dataframe.p'])],

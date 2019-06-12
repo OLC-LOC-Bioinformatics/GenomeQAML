@@ -25,7 +25,10 @@ def main(sequencepath, report, refseq_database, num_threads=12):
     files = find_files(sequencepath)
     file_dict = filer(files)
     print('Using MASH to determine genera of samples')
-    genus_dict = find_genus(file_dict, refseq_database, threads=num_threads)
+    genus_dict = find_genus(files=file_dict,
+                            database=refseq_database,
+                            sequencepath=sequencepath,
+                            threads=num_threads)
     file_records = fasta_records(file_dict)
     print('Collecting basic quality metrics')
     contig_len_dict, gc_dict = fasta_stats(file_dict, file_records)
@@ -94,16 +97,17 @@ def fasta_records(files):
     return file_records
 
 
-def find_genus(files, database, threads=12):
+def find_genus(files, database, sequencepath, threads=12):
     """
     Uses MASH to find the genus of fasta files.
     :param files: File dictionary returned by filer method.
     :param database: Path to reduced refseq database sketch.
+    :param sequencepath: Path to sequences
     :param threads: Number of threads to run mash with.
     :return: genus_dict: Dictionary of genus for each sample. Will return NA if genus could not be found.
     """
     genus_dict = dict()
-    tmpdir = str(time.time()).split('.')[-1]
+    tmpdir = os.path.join(sequencepath, str(time.time()).split('.')[-1])
     if not os.path.isdir(tmpdir):
         os.makedirs(tmpdir)
     for file_name, fasta in files.items():
